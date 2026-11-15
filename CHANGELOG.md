@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-15
+
 ### Fixed
 
 - The Go step now reports a failed write of the downloaded archive (for example a full disk) instead of going on to verify a partial file.
@@ -48,7 +50,8 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guiltydot/sysupdate-cli/releases/tag/v0.1.0
