@@ -2,6 +2,15 @@
 
 A Go + [Bubble Tea](https://github.com/charmbracelet/bubbletea) terminal app: one command to update the whole WSL/Ubuntu dev environment, with an overview of what's outdated, per-step selection, live logs and run history.
 
+![sysupdate overview: every updater with its version, pending updates and last run, and the commands the highlighted step will run](docs/overview.svg)
+
+<details>
+<summary>Settings screen</summary>
+
+![sysupdate settings: every option on one page, grouped into APT, toolchains, exclusions and general](docs/settings.svg)
+
+</details>
+
 The full user guide is in [HELP.md](HELP.md). It is built into the binary: press `?` in the TUI, or run `sysupdate help --full`.
 
 ## Steps
