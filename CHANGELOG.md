@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-15
+
 ### Changed
 
 - Updated dependencies: glamour 1.0.0 (help screen rendering) and charmbracelet/x/ansi 0.11.9, plus their transitive updates.
@@ -55,7 +57,8 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...v0.2.0
