@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-15
+
 ### Fixed
 
 - CI and release builds use the newest stable Go instead of the oldest version go.mod allows, so release binaries include standard-library security fixes.
@@ -42,6 +44,7 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guiltydot/sysupdate-cli/releases/tag/v0.1.0
