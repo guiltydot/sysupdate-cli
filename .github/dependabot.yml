@@ -1,0 +1,24 @@
+# Dependabot version updates: one grouped pull request per ecosystem each week.
+# Commit prefixes follow Conventional Commits so scripts/release.sh can classify them:
+# Go module updates count as fixes (a patch release), action updates as CI only.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: fix(deps)
+    groups:
+      go-modules:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      actions:
+        patterns: ["*"]
