@@ -128,3 +128,7 @@ custom:
 ```
 
 Run history and logs are kept in `~/.local/state/sysupdate/` (`state.json`, `logs/`).
+
+## License
+
+[MIT](LICENSE)

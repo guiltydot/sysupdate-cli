@@ -29,7 +29,7 @@ jobs:
             name="sysupdate_${VERSION}_linux_${arch}"
             CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath \
               -ldflags "-s -w -X main.version=${VERSION}" -o "dist/$name/sysupdate" ./cmd/sysupdate
-            cp README.md HELP.md CHANGELOG.md "dist/$name/"
+            cp README.md HELP.md CHANGELOG.md LICENSE "dist/$name/"
             tar -C dist -czf "dist/$name.tar.gz" "$name"
           done
           (cd dist && sha256sum ./*.tar.gz > checksums.txt)
