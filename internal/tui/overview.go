@@ -297,7 +297,11 @@ func (m Model) viewDetail(r *row, w, h int) string {
 		}
 	}
 	if r.checked && len(r.check.Details) > 0 {
-		lines = append(lines, "", sHeader.Render("Pending:"))
+		head := "Pending:"
+		if r.check.State != steps.CheckOutdated {
+			head = "Notes:"
+		}
+		lines = append(lines, "", sHeader.Render(head))
 		for _, d := range r.check.Details {
 			lines = append(lines, "  "+d)
 		}

@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 
 - Settings is now a single page showing every setting, saved as you change it, instead of a multi-page form.
 
+### Fixed
+
+- APT no longer reports phased updates as pending. The check simulates the real upgrade, and lists phased and kept-back packages as held back.
+- pnpm self-update could keep an old version because pnpm answered from its metadata cache. sysupdate now passes the latest version from the registry.
+
 ## [0.1.0]
 
 ### Added

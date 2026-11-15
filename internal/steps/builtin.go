@@ -36,7 +36,7 @@ func aptStep() *Step {
 			return ""
 		},
 		Check: func(ctx context.Context, cfg *config.Config) CheckResult {
-			r := aptCheck(ctx)
+			r := aptCheck(ctx, cfg)
 			r.Cleanup = aptCleanup(ctx)
 			return r
 		},
@@ -46,32 +46,70 @@ func aptStep() *Step {
 
 // aptCheck lists upgradable packages from the cached package lists,
 // so it reflects the last `apt update`.
-func aptCheck(ctx context.Context) CheckResult {
-	out, err := Output(ctx, "apt", "list", "--upgradable")
+func aptCheck(ctx context.Context, cfg *config.Config) CheckResult {
+	upgrade := "upgrade"
+	if cfg.Apt.FullUpgrade {
+		upgrade = "full-upgrade"
+	}
+	// A simulated upgrade shows what the APT step would really install. Unlike
+	// `apt list --upgradable`, it leaves out phased updates, which Ubuntu rolls
+	// out gradually and apt holds back until this machine's turn.
+	out, err := Output(ctx, "apt-get", "-s", "-o", "Debug::NoLocking=1", upgrade)
 	if err != nil {
 		return errResult(err)
 	}
-	var pkgs []string
-	for _, l := range strings.Split(out, "\n") {
-		if l == "" || strings.HasPrefix(l, "Listing") {
-			continue
-		}
-		name, _, _ := strings.Cut(l, "/")
-		fields := strings.Fields(l)
-		from := ""
-		if i := strings.Index(l, "upgradable from: "); i >= 0 {
-			from = strings.TrimSuffix(l[i+len("upgradable from: "):], "]")
-		}
-		if len(fields) > 1 {
-			pkgs = append(pkgs, fmt.Sprintf("%s %s → %s", name, from, fields[1]))
-		} else {
-			pkgs = append(pkgs, name)
-		}
+	pkgs, phased, kept := parseAptSim(out)
+	var notes []string
+	if len(phased) > 0 {
+		notes = append(notes, fmt.Sprintf("%s held back by phased rollout: %s", plural(len(phased), "package"), strings.Join(phased, " ")))
+	}
+	if len(kept) > 0 {
+		notes = append(notes, fmt.Sprintf("%s kept back (turn on full-upgrade to install): %s", plural(len(kept), "package"), strings.Join(kept, " ")))
 	}
 	if len(pkgs) == 0 {
-		return CheckResult{State: CheckUpToDate, Summary: "up to date (cached lists)"}
+		summary := "up to date"
+		if len(phased)+len(kept) > 0 {
+			summary += fmt.Sprintf(" (%d held back)", len(phased)+len(kept))
+		}
+		return CheckResult{State: CheckUpToDate, Summary: summary, Details: notes}
 	}
-	return outdated(plural(len(pkgs), "package"), pkgs...)
+	return outdated(plural(len(pkgs), "package"), append(pkgs, notes...)...)
+}
+
+// parseAptSim reads `apt-get -s upgrade` output: packages it would install
+// ("Inst name [old] (new ...)"), and those deferred by phasing or kept back.
+func parseAptSim(out string) (pkgs, phased, kept []string) {
+	var list *[]string
+	for _, l := range strings.Split(out, "\n") {
+		switch {
+		case strings.HasPrefix(l, "Inst "):
+			f := strings.Fields(l)
+			name, from, to := f[1], "", ""
+			for _, x := range f[2:] {
+				switch {
+				case strings.HasPrefix(x, "[") && from == "" && to == "":
+					from = strings.Trim(x, "[]")
+				case strings.HasPrefix(x, "(") && to == "":
+					to = strings.TrimPrefix(x, "(")
+				}
+			}
+			if from != "" {
+				pkgs = append(pkgs, fmt.Sprintf("%s %s → %s", name, from, to))
+			} else {
+				pkgs = append(pkgs, fmt.Sprintf("%s %s (new)", name, to))
+			}
+			list = nil
+		case strings.Contains(l, "deferred due to phasing"):
+			list = &phased
+		case strings.Contains(l, "have been kept back"):
+			list = &kept
+		case strings.HasPrefix(l, "  ") && list != nil:
+			*list = append(*list, strings.Fields(l)...)
+		default:
+			list = nil
+		}
+	}
+	return
 }
 
 // aptCleanup reports packages that autoremove would remove and packages
@@ -456,7 +494,7 @@ func pnpmStep() *Step {
 		},
 		Plan: func(ctx context.Context, _ *config.Config) ([]Action, error) {
 			return []Action{
-				Exec("pnpm self-update", false, nil, "pnpm", "self-update"),
+				pnpmSelfUpdate(ctx),
 				Exec("pnpm update -g", false, nil, "pnpm", "update", "-g"),
 			}, nil
 		},
@@ -655,4 +693,18 @@ func nodeCleanup(ctx context.Context) []Cleanup {
 		}
 	}
 	return out
+}
+
+// pnpmSelfUpdate asks the registry for pnpm's latest version and passes it to
+// `pnpm self-update` explicitly. Without a version, pnpm can answer from its
+// metadata cache and wrongly report an older release as the latest.
+func pnpmSelfUpdate(ctx context.Context) Action {
+	var latest npmLatest
+	cur, _ := Output(ctx, "pnpm", "--version")
+	// Only pin when it is an upgrade: an explicit version would also allow a downgrade.
+	if err := GetJSON(ctx, "https://registry.npmjs.org/pnpm/latest", &latest); err != nil || latest.Version == "" ||
+		cur == "" || compareVersions(latest.Version, cur) <= 0 {
+		return Exec("pnpm self-update", false, nil, "pnpm", "self-update")
+	}
+	return Exec("pnpm self-update", false, nil, "pnpm", "self-update", latest.Version)
 }

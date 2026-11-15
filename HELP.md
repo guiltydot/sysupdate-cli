@@ -28,7 +28,7 @@ Steps whose tool isn't installed are shown as *not installed* and skipped.
 
 Each built-in step can look for pending updates without changing anything:
 
-- **APT**: the cached upgradable list, so it reflects your last `apt update`
+- **APT**: a simulated `apt-get upgrade` (or `full-upgrade`) on the cached package lists, so it reflects your last `apt update`. Phased updates, which Ubuntu releases to machines gradually, are shown as held back rather than pending, because apt will not install them yet.
 - **Go**: the go.dev release feed
 - **Go binaries**: `gup check`
 - **Rust**: `rustup check`
