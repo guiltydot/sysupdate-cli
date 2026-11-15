@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- CI and release builds use the newest stable Go instead of the oldest version go.mod allows, so release binaries include standard-library security fixes.
+
 ## [0.2.0] - 2026-11-15
 
 ### Added
