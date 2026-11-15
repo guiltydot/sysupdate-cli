@@ -10,6 +10,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Updated dependencies: glamour 1.0.0 (help screen rendering) and charmbracelet/x/ansi 0.11.9, plus their transitive updates.
+- CI uses actions/checkout v7, actions/setup-go v7 and golangci-lint-action v9.
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixed
