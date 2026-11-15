@@ -129,6 +129,10 @@ custom:
 
 Run history and logs are kept in `~/.local/state/sysupdate/` (`state.json`, `logs/`).
 
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and commit conventions, and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
 ## License
 
 [MIT](LICENSE)
