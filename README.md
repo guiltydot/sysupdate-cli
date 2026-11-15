@@ -34,6 +34,8 @@ Requires Go 1.26 or newer.
 go install github.com/guiltydot/sysupdate-cli/cmd/sysupdate@latest
 ```
 
+Prebuilt Linux binaries (amd64, arm64) with checksums are attached to each [GitHub Release](https://github.com/guiltydot/sysupdate-cli/releases).
+
 Or from a clone:
 
 ```bash
@@ -44,13 +46,24 @@ make install        # builds and installs to ~/.local/bin/sysupdate
 
 sysupdate follows [Semantic Versioning](https://semver.org). Releases are git tags `vMAJOR.MINOR.PATCH`, and changes are listed in [CHANGELOG.md](CHANGELOG.md). `sysupdate version` prints the version it was built from: a tag such as `v0.1.0`, or for builds between tags something like `v0.1.0-3-gabc1234`.
 
-To cut a release, add a `## [X.Y.Z]` section to the changelog, commit, then:
+Releases are cut automatically from the commit history. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), and the type decides the bump:
+
+| Commit | Bump |
+|---|---|
+| `feat: …` | minor |
+| `fix: …`, `perf: …`, `refactor: …` | patch |
+| `feat!: …` or a `BREAKING CHANGE:` footer | major (minor while the version is 0.x) |
+| `docs:`, `test:`, `ci:`, `build:`, `chore:`, `style:` only | no release |
+
+Each change also gets a line under `## [Unreleased]` in the changelog. Then:
 
 ```bash
-make release V=X.Y.Z
+make next-version   # show the version the commits call for
+make release        # vet, tests, govulncheck; date the changelog; commit; tag
+git push origin main vX.Y.Z
 ```
 
-This runs vet, tests and govulncheck, checks the tree is clean and creates the tag. Pushing is left to you.
+`BUMP=major|minor|patch make release` overrides the decision. Pushing a `v*` tag runs the release workflow, which tests the code, builds Linux binaries (amd64 and arm64) and publishes a GitHub Release with that version's changelog notes.
 
 ## TUI
 

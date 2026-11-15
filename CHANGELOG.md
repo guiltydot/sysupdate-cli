@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 
 - Leftovers found by the checks can be removed: `d` on a step in the TUI, or `sysupdate clean` (`--yes`, `--dry-run`, `--only`). Both show the commands and ask first.
 
+- `make release` picks the next version from the commits since the last tag (Conventional Commits), dates the changelog, commits and tags. `make next-version` previews it.
+- GitHub Actions: CI (vet, race tests, govulncheck, shellcheck) on every push, and a release workflow that publishes Linux binaries and changelog notes when a version tag is pushed.
+
 ### Changed
 
 - Settings is now a single page showing every setting, saved as you change it, instead of a multi-page form.

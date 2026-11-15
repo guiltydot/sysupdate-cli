@@ -1,0 +1,48 @@
+name: Release
+
+# Runs when a version tag (made by `make release`) is pushed.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write # create the GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test
+        run: go vet ./... && go test ./...
+
+      - name: Build binaries
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          mkdir dist
+          for arch in amd64 arm64; do
+            name="sysupdate_${VERSION}_linux_${arch}"
+            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath \
+              -ldflags "-s -w -X main.version=${VERSION}" -o "dist/$name/sysupdate" ./cmd/sysupdate
+            cp README.md HELP.md CHANGELOG.md "dist/$name/"
+            tar -C dist -czf "dist/$name.tar.gz" "$name"
+          done
+          (cd dist && sha256sum ./*.tar.gz > checksums.txt)
+
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          v="${VERSION#v}"
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} /^\[.*\]: http/ {f=0} f' CHANGELOG.md > notes.md
+          test -s notes.md || echo "See CHANGELOG.md." > notes.md
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: gh release create "$VERSION" --title "sysupdate $VERSION" --notes-file notes.md --verify-tag dist/*.tar.gz dist/checksums.txt
