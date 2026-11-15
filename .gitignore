@@ -1,0 +1,34 @@
+# Build output
+/sysupdate
+/dist/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Go workspace files are machine-specific
+go.work
+go.work.sum
+
+# Local sysupdate config, state and logs, in case they get copied here
+config.yaml
+state.json
+logs/
+*.log
+
+# Secrets and environment files
+.env
+.env.*
+*.pem
+*.key
+
+# Editors and OS files
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json

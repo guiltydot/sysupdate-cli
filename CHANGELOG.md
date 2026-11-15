@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html):
+
+- **MAJOR** for incompatible changes to the CLI, exit codes or config file format
+- **MINOR** for new steps, commands or settings that keep existing configs working
+- **PATCH** for bug fixes
+
+## [Unreleased]
+
+## [0.1.0]
+
+### Added
+
+- Bubble Tea TUI: overview of all steps with installed versions, pending updates and last run; per-step selection; live run screen with progress, cancel and retry; log viewer; built-in help.
+- Steps: APT, Go toolchain, gup (`go install` binaries), rustup, cargo crates, Node.js via nvm, pnpm and globals, uv and tools, pyenv, Claude Code, gh extensions, Docker images (off by default) and user-defined custom steps.
+- Read-only update checks for every built-in step, and a report of leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images). Nothing is removed automatically.
+- Settings and custom-step forms (Huh), YAML config at `~/.config/sysupdate/config.yaml`.
+- Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
+- Run history and per-run logs in `~/.local/state/sysupdate`.
+
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/guiltydot/sysupdate-cli/releases/tag/v0.1.0
