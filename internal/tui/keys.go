@@ -148,6 +148,28 @@ func (k settingsKeyMap) ShortHelp() []key.Binding {
 
 func (k settingsKeyMap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
 
+// ---- first-run setup ----
+
+type setupKeyMap struct {
+	Up, Down, Toggle, All, Save, Skip, Help, Quit key.Binding
+}
+
+var setupKeys = setupKeyMap{
+	Up: keyUp, Down: keyDown,
+	Toggle: bind([]string{" ", "x"}, "space", "toggle"),
+	All:    bind([]string{"a"}, "a", "all/none"),
+	Save:   bind([]string{"enter"}, "enter", "save and continue"),
+	Skip:   bind([]string{"esc"}, "esc", "skip (keep defaults)"),
+	Help:   keyHelp,
+	Quit:   bind([]string{"q"}, "q", "quit without saving"),
+}
+
+func (k setupKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Up, k.Toggle, k.All, k.Save, k.Skip, k.Help, k.Quit}
+}
+
+func (k setupKeyMap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
+
 // ---- custom steps list ----
 
 type customKeyMap struct {

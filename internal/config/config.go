@@ -96,6 +96,13 @@ func Path() string {
 	return filepath.Join(dir, "sysupdate", "config.yaml")
 }
 
+// Exists reports whether the config file has been written yet. Until then
+// sysupdate treats the machine as new and offers the first-run setup.
+func Exists() bool {
+	_, err := os.Stat(Path())
+	return err == nil
+}
+
 // StateDir returns $XDG_STATE_HOME/sysupdate, used for logs and run history.
 func StateDir() string {
 	base := os.Getenv("XDG_STATE_HOME")

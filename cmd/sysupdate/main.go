@@ -44,6 +44,7 @@ const usage = `sysupdate — update the dev environment (APT, Go, gup, Rust, Car
 
 Usage:
   sysupdate                     open the interactive TUI
+  sysupdate setup               choose which steps to use (shown automatically on first run)
   sysupdate run [flags]         run enabled steps without the TUI (plain output)
       --only a,b                run just these step IDs
       --skip a,b                skip these step IDs
@@ -74,7 +75,8 @@ func main() {
 		if cfgErr != nil && !term.IsTerminal(os.Stdout.Fd()) {
 			fatal(cfgErr)
 		}
-		if err := tui.Run(cfg, cfgErr, sysupdate.Help); err != nil {
+		// No config file yet: this is a new machine, so start with setup.
+		if err := tui.Run(cfg, cfgErr, sysupdate.Help, cfgErr == nil && !config.Exists()); err != nil {
 			fatal(err)
 		}
 		return
@@ -85,6 +87,13 @@ func main() {
 	switch args[0] {
 	case "run":
 		os.Exit(cmdRun(cfg, args[1:]))
+	case "setup":
+		if !term.IsTerminal(os.Stdout.Fd()) {
+			fatal(fmt.Errorf("setup needs a terminal"))
+		}
+		if err := tui.Run(cfg, cfgErr, sysupdate.Help, true); err != nil {
+			fatal(err)
+		}
 	case "clean":
 		os.Exit(cmdClean(cfg, args[1:]))
 	case "check":
@@ -157,6 +166,9 @@ func cmdRun(cfg *config.Config, args []string) int {
 		return 0
 	}
 
+	if !config.Exists() && len(onlySet) == 0 && !*all {
+		fmt.Fprintln(os.Stderr, stMuted.Render("No config yet, so running the default steps that are installed. Run `sysupdate setup` to choose."))
+	}
 	ctx := context.Background()
 	if *dry {
 		for _, s := range list {

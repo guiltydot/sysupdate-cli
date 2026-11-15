@@ -55,6 +55,19 @@ They appear under "Could be removed" in the detail pane (the Updates column show
 
 ## Screens and keys
 
+### Setup
+
+The first time you open sysupdate (when there is no config file yet), it starts with setup. It detects which tools are installed on this machine and pre-selects the installed ones that are on by default. Tools that aren't installed are shown greyed out. Pick what you want sysupdate to update, then press `enter` to save. Run `sysupdate setup` to come back to this screen later.
+
+| Key | Action |
+|---|---|
+| `↑` `↓` / `j` `k` | Move |
+| `space` / `x` | Select or deselect the step |
+| `a` | Select all / none of the installed steps |
+| `enter` | Save and go to the overview |
+| `esc` | Skip: keep the default selection (setup won't open again) |
+| `q` | Quit without saving (setup opens again next time) |
+
 ### Overview
 
 The table lists every step with its checkbox, installed version, pending updates and last run. `#` marks steps that use sudo. Below the table you see the highlighted step's description, the exact commands it will run, and the list of pending updates.
@@ -131,6 +144,7 @@ If a selected step needs sudo, the app hands the terminal to `sudo -v` once, bef
 Without arguments, `sysupdate` opens this interface. For scripts and cron:
 
 ```
+sysupdate setup               choose which steps to use (opens automatically on first run)
 sysupdate run                 run the enabled steps with plain output
 sysupdate run --only apt,go   run just these step IDs
 sysupdate run --skip cargo    skip these step IDs

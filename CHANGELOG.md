@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- First-run setup: when there is no config yet, sysupdate detects which tools are installed and lets you choose which steps to use before saving. `sysupdate setup` reopens it, and `sysupdate run` without a config says how to choose.
+
 ## [0.2.3] - 2026-11-15
 
 ### Changed

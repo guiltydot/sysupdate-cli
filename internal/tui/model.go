@@ -32,6 +32,7 @@ const (
 	scrHelp
 	scrCustom
 	scrForm
+	scrSetup
 )
 
 // row is one step as shown in the overview.
@@ -80,6 +81,7 @@ type Model struct {
 
 	customCursor int
 	set          settingsState
+	setup        setupState
 
 	logs    []string
 	logIdx  int
@@ -88,11 +90,15 @@ type Model struct {
 
 // New builds the model from the loaded configuration.
 // helpText is the markdown shown on the help screen.
-func New(cfg *config.Config, cfgErr error, helpText string, darkBG bool) Model {
+// With setup set, it opens on the first-run setup screen instead of the overview.
+func New(cfg *config.Config, cfgErr error, helpText string, darkBG, setup bool) Model {
 	sp := spinner.New(spinner.WithSpinner(spinner.Spinner{Frames: []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}, FPS: time.Second / 10}), spinner.WithStyle(sAccent))
 	m := Model{cfg: cfg, cfgErr: cfgErr, st: state.Load(), spin: sp, width: 100, height: 30, help: newHelp(),
 		helpText: helpText, darkBG: darkBG}
 	m.buildRows()
+	if setup {
+		m.openSetup()
+	}
 	if cfgErr != nil {
 		m.setFlash("config error, using defaults: " + cfgErr.Error())
 	}
@@ -236,6 +242,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		r := m.rows[msg.idx]
 		wasProbed := r.probed
 		r.probed, r.available, r.version, r.preview, r.planErr = true, msg.available, msg.version, msg.preview, msg.planErr
+		m.setupProbed(r)
 		if !wasProbed && m.cfg.General.CheckOnStart && r.available && !r.checked {
 			return m, m.checkOne(msg.idx)
 		}
@@ -297,6 +304,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateCustom(msg)
 		case scrSettings:
 			return m.updateSettings(msg)
+		case scrSetup:
+			return m.updateSetup(msg)
 		case scrOverview:
 			return m.updateOverview(msg)
 		case scrRun:
@@ -352,6 +361,8 @@ func (m Model) View() string {
 		return m.viewCustom()
 	case scrSettings:
 		return m.viewSettings()
+	case scrSetup:
+		return m.viewSetup()
 	case scrForm:
 		return m.viewForm()
 	case scrLogs:
@@ -406,9 +417,10 @@ func (m Model) footer(km help.KeyMap) string {
 }
 
 // Run starts the TUI. The background is detected before Bubble Tea takes over the terminal.
-func Run(cfg *config.Config, cfgErr error, helpText string) error {
+// With setup set it starts on the first-run setup screen.
+func Run(cfg *config.Config, cfgErr error, helpText string, setup bool) error {
 	dark := lipgloss.HasDarkBackground()
-	p := tea.NewProgram(New(cfg, cfgErr, helpText, dark), tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(New(cfg, cfgErr, helpText, dark, setup), tea.WithAltScreen(), tea.WithMouseCellMotion())
 	_, err := p.Run()
 	return err
 }

@@ -76,7 +76,7 @@ git push origin main vX.Y.Z
 
 ## TUI
 
-Run `sysupdate`.
+Run `sysupdate`. The first time, it opens **setup**: it detects which of the supported tools are installed, pre-selects them, and lets you choose which ones to keep updated before anything is saved. `sysupdate setup` reopens it later.
 
 - **Overview**: one row per step with its enabled checkbox, installed version, pending updates and last run result. The panel under the table shows the highlighted step's commands and the list of pending updates.
   `space` toggle · `a` all/none · `u` select only outdated · `enter` run selected · `o` run only the highlighted step · `c`/`C` check all/this · `d` clean up leftovers · `s` settings · `m` custom steps · `e` edit config · `l` logs · `?` help · `q` quit
@@ -92,6 +92,7 @@ If any selected step needs sudo, the TUI hands the terminal to `sudo -v` before 
 Output is styled with [Lip Gloss](https://github.com/charmbracelet/lipgloss): coloured step headings and rounded summary tables for `run`, `check` and `list`. Colours are dropped automatically when output is piped or `NO_COLOR` is set.
 
 ```bash
+sysupdate setup                  # choose which steps to use (opens on first run)
 sysupdate run                    # enabled steps, plain output, exit 1 if any step failed
 sysupdate run --only apt,go
 sysupdate run --skip cargo --dry-run
