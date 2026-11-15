@@ -45,13 +45,13 @@ Checks run when the app opens (you can turn this off in Settings) and again afte
 
 ### Things that could be removed
 
-Checks also look for leftovers. sysupdate only reports these with the command that would remove them; it never deletes them itself:
+Checks also look for leftovers. They are listed with the command that removes them, and are only removed when you ask:
 
 - **APT**: packages `apt autoremove` would remove (simulated with `apt-get -s`), and removed packages whose config files are still on disk (`apt purge`)
 - **Node**: older Node versions nvm left behind after an upgrade (`nvm uninstall`)
 - **Docker**: untagged images left behind by newer pulls (`docker image prune`)
 
-They appear under "Could be removed" in the detail pane (the Updates column shows "· N to clean") and at the end of `sysupdate check`. APT's `autoremove --purge` is off by default; turn it on in Settings if you want it to run automatically.
+They appear under "Could be removed" in the detail pane (the Updates column shows "· N to clean") and at the end of `sysupdate check`. To remove them, press `d` on the step in the TUI, or run `sysupdate clean`. Both show the exact commands and ask before running them. APT's `autoremove --purge` after every upgrade is off by default; turn it on in Settings if you want it to happen automatically.
 
 ## Screens and keys
 
@@ -68,6 +68,7 @@ The table lists every step with its checkbox, installed version, pending updates
 | `enter` / `r` | Run all enabled steps |
 | `o` | Run only the highlighted step |
 | `c` / `C` | Check all steps / check the highlighted step |
+| `d` | Remove the highlighted step's leftovers (asks first) |
 | `s` | Settings |
 | `m` | Custom steps |
 | `e` | Edit the config file in `$EDITOR` |
@@ -91,9 +92,15 @@ The run screen shows a progress bar, a status for each step (✓ ok, ✗ failed,
 
 ### Settings
 
-A form with four pages: APT options; toolchains (the Node version to track, whether global npm packages are carried over, and the Go install root); exclusions (crates and gup binaries to leave alone, comma-separated); and general options (*Stop on first failure*, *Check for updates on start*, and the number of logs kept).
+Every setting on one page, grouped into APT, toolchains (the Node version to track, whether global npm packages are carried over, the Go install root), exclusions (crates, gup binaries and Docker images to leave alone) and general options (*Stop on first failure*, *Check for updates on start*, the number of logs kept). The line under the list explains the highlighted setting. Changes are saved as soon as you make them.
 
-Use `tab` or `enter` to move to the next field and `shift+tab` to go back. Switch toggles with `←`/`→` or `y`/`n`. Pressing `enter` on the last field saves; `esc` closes the form without changing anything.
+| Key | Action |
+|---|---|
+| `↑` `↓` / `j` `k` / `tab` | Move |
+| `space` / `enter` | Toggle an on/off setting |
+| `←` `→` / `space` | Change a choice |
+| `enter` | Edit a text value; `enter` again saves it, `esc` cancels the edit |
+| `esc` / `q` / `s` | Back to the overview |
 
 ### Custom steps
 
@@ -130,6 +137,7 @@ sysupdate run --skip cargo    skip these step IDs
 sysupdate run --all           run every installed step, ignoring the config
 sysupdate run --dry-run       print the commands without running them
 sysupdate check               show which steps have updates
+sysupdate clean               remove leftovers the checks found (asks first; --yes, --dry-run, --only)
 sysupdate list                list IDs, enabled state, versions and last runs
 sysupdate config [path|init|edit]
 sysupdate logs [-n N] [-list]

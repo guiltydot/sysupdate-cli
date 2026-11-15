@@ -10,6 +10,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Leftovers found by the checks can be removed: `d` on a step in the TUI, or `sysupdate clean` (`--yes`, `--dry-run`, `--only`). Both show the commands and ask first.
+
+### Changed
+
+- Settings is now a single page showing every setting, saved as you change it, instead of a multi-page form.
+
 ## [0.1.0]
 
 ### Added

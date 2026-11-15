@@ -51,8 +51,36 @@ type CheckResult struct {
 	Summary string   // short, e.g. "3 packages" or "1.25.1 → 1.25.2"
 	Details []string // e.g. the package list, shown in the detail pane
 	// Cleanup lists things that could be removed (unused packages, old versions).
-	// sysupdate never removes them itself; it only reports them with a hint.
-	Cleanup []string
+	// They are only removed when the user asks for it (`d` in the TUI, `sysupdate clean`).
+	Cleanup []Cleanup
+}
+
+// Cleanup is one removable leftover and the command that removes it.
+type Cleanup struct {
+	Text   string // what is left over, e.g. "old Node v26.13.0"
+	Sudo   bool
+	Action Action // Display is the command shown to the user
+}
+
+// CleanupStep wraps a step's cleanup items in a step the runner can run.
+func CleanupStep(s *Step, items []Cleanup) *Step {
+	sudo := false
+	for _, c := range items {
+		sudo = sudo || c.Sudo
+	}
+	return &Step{
+		ID: s.ID + "-cleanup", Name: "Clean up " + s.Name, NeedsSudo: sudo,
+		Description: "Removes leftovers found by the " + s.Name + " check.",
+		Available:   func() bool { return true },
+		Version:     func(context.Context, *config.Config) string { return "" },
+		Plan: func(context.Context, *config.Config) ([]Action, error) {
+			acts := make([]Action, len(items))
+			for i, c := range items {
+				acts[i] = c.Action
+			}
+			return acts, nil
+		},
+	}
 }
 
 // Action is a single unit of work inside a step.

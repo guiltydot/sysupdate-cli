@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -74,93 +73,6 @@ func (m *Model) configChanged(flash string) tea.Cmd {
 	m.setFlash(flash)
 	m.buildRows()
 	return m.probeAll()
-}
-
-// ---- settings ----
-
-type settingsDraft struct {
-	aptFull, aptAutoremove, aptAutoclean    bool
-	nodeChannel                             string
-	nodeReinstall                           bool
-	stopOnFailure, checkOnStart             bool
-	keepLogs, goRoot                        string
-	cargoExclude, gupExclude, dockerExclude string
-}
-
-func joinList(l []string) string { return strings.Join(l, ", ") }
-
-func splitList(s string) []string {
-	out := []string{}
-	for _, f := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ' ' || r == '\n' }) {
-		out = append(out, f)
-	}
-	return out
-}
-
-func toggle(title, desc string, v *bool) *huh.Confirm {
-	return huh.NewConfirm().Title(title).Description(desc).Affirmative("On").Negative("Off").Value(v)
-}
-
-func (m *Model) openSettingsForm() tea.Cmd {
-	c := m.cfg
-	d := &settingsDraft{
-		aptFull: c.Apt.FullUpgrade, aptAutoremove: c.Apt.Autoremove, aptAutoclean: c.Apt.Autoclean,
-		nodeChannel: c.Node.Channel, nodeReinstall: c.Node.ReinstallPackages,
-		stopOnFailure: c.General.StopOnFailure, checkOnStart: c.General.CheckOnStart,
-		keepLogs: strconv.Itoa(c.General.KeepLogs), goRoot: c.Go.Root,
-		cargoExclude: joinList(c.Cargo.Exclude), gupExclude: joinList(c.Gup.Exclude), dockerExclude: joinList(c.Docker.Exclude),
-	}
-	f := huh.NewForm(
-		huh.NewGroup(
-			toggle("full-upgrade", "Use apt-get full-upgrade, which may add or remove packages, instead of upgrade.", &d.aptFull),
-			toggle("autoremove --purge", "Remove packages that are no longer needed.", &d.aptAutoremove),
-			toggle("autoclean", "Delete obsolete .deb files from the package cache.", &d.aptAutoclean),
-		).Title("Ubuntu packages (APT)"),
-		huh.NewGroup(
-			huh.NewSelect[string]().Title("Node.js version to track").
-				Options(
-					huh.NewOption("Newest release of my current major", "current-major"),
-					huh.NewOption("Latest LTS release", "lts"),
-				).Value(&d.nodeChannel),
-			toggle("Reinstall global npm packages", "Carry global packages over when a new Node version is installed.", &d.nodeReinstall),
-			huh.NewInput().Title("Go install root").Description("Where the Go step installs Go.").
-				Value(&d.goRoot).Validate(func(s string) error {
-				if !strings.HasPrefix(strings.TrimSpace(s), "/") {
-					return errors.New("must be an absolute path")
-				}
-				return nil
-			}),
-		).Title("Toolchains"),
-		huh.NewGroup(
-			huh.NewInput().Title("Cargo: crates never reinstalled").Description("Comma-separated crate names.").
-				Placeholder("none").Value(&d.cargoExclude),
-			huh.NewInput().Title("gup: Go binaries never updated").Description("Comma-separated binary names from $GOBIN.").
-				Placeholder("none").Value(&d.gupExclude),
-			huh.NewInput().Title("Docker: images never pulled").Description("Comma-separated, as repo:tag or just repo.").
-				Placeholder("none").Value(&d.dockerExclude),
-		).Title("Exclusions"),
-		huh.NewGroup(
-			toggle("Stop on first failure", "Skip the remaining steps after one fails.", &d.stopOnFailure),
-			toggle("Check for updates on start", "Look for pending updates when the app opens. This uses the network.", &d.checkOnStart),
-			huh.NewInput().Title("Run logs to keep").Value(&d.keepLogs).Validate(func(s string) error {
-				if n, err := strconv.Atoi(strings.TrimSpace(s)); err != nil || n < 1 {
-					return errors.New("enter a whole number of at least 1")
-				}
-				return nil
-			}),
-		).Title("General"),
-	)
-	return m.showForm("Settings", f, func(m *Model) tea.Cmd {
-		c := m.cfg
-		c.Apt.FullUpgrade, c.Apt.Autoremove, c.Apt.Autoclean = d.aptFull, d.aptAutoremove, d.aptAutoclean
-		c.Node.Channel, c.Node.ReinstallPackages = d.nodeChannel, d.nodeReinstall
-		c.Go.Root = strings.TrimRight(strings.TrimSpace(d.goRoot), "/")
-		c.Cargo.Exclude, c.Gup.Exclude = splitList(d.cargoExclude), splitList(d.gupExclude)
-		c.Docker.Exclude = splitList(d.dockerExclude)
-		c.General.StopOnFailure, c.General.CheckOnStart = d.stopOnFailure, d.checkOnStart
-		c.General.KeepLogs, _ = strconv.Atoi(strings.TrimSpace(d.keepLogs))
-		return m.configChanged("settings saved")
-	})
 }
 
 // ---- custom steps ----

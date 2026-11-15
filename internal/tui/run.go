@@ -61,13 +61,11 @@ func waitEvent(ch chan any) tea.Cmd {
 	}
 }
 
-func (m Model) startRun(list []int) (tea.Model, tea.Cmd) {
+func (m Model) startRun(rows []int, sel []*steps.Step) (tea.Model, tea.Cmd) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rs := &runState{follow: true, autoSel: true, cancel: cancel, events: make(chan any, 4096), started: time.Now()}
-	var sel []*steps.Step
-	for _, i := range list {
-		rs.items = append(rs.items, &stepRun{rowIdx: i, step: m.rows[i].step})
-		sel = append(sel, m.rows[i].step)
+	for i, s := range sel {
+		rs.items = append(rs.items, &stepRun{rowIdx: rows[i], step: s})
 	}
 	w, h := m.runLogSize()
 	rs.vp = viewport.New(w, h)
@@ -248,17 +246,18 @@ func (m Model) updateRun(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 		rs.vp.GotoBottom()
 		rs.follow = true
 	case key.Matches(k, km.Retry):
-		var retry []int
+		var rows []int
+		var retry []*steps.Step
 		for _, it := range rs.items {
 			if it.result.Status == runner.Failed {
-				retry = append(retry, it.rowIdx)
+				rows, retry = append(rows, it.rowIdx), append(retry, it.step)
 			}
 		}
 		if len(retry) == 0 {
 			m.setFlash("no failed steps to retry")
 			return m, nil
 		}
-		return m.requestRun(retry)
+		return m.requestSteps(rows, retry)
 	case key.Matches(k, km.Back):
 		m.screen = scrOverview
 		m.run = nil

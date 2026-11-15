@@ -76,8 +76,9 @@ func aptCheck(ctx context.Context) CheckResult {
 
 // aptCleanup reports packages that autoremove would remove and packages
 // removed earlier whose config files are still on disk. Nothing is deleted.
-func aptCleanup(ctx context.Context) []string {
-	var out []string
+func aptCleanup(ctx context.Context) []Cleanup {
+	var out []Cleanup
+	env := []string{"DEBIAN_FRONTEND=noninteractive"}
 	if sim, err := Output(ctx, "apt-get", "-s", "autoremove"); err == nil {
 		var names []string
 		for _, l := range strings.Split(sim, "\n") {
@@ -86,8 +87,11 @@ func aptCleanup(ctx context.Context) []string {
 			}
 		}
 		if len(names) > 0 {
-			out = append(out, fmt.Sprintf("%s no longer needed: %s  (sudo apt autoremove)",
-				plural(len(names), "package"), strings.Join(names, " ")))
+			out = append(out, Cleanup{
+				Text:   fmt.Sprintf("%s no longer needed: %s", plural(len(names), "package"), strings.Join(names, " ")),
+				Sudo:   true,
+				Action: Exec("apt autoremove", true, env, "apt-get", "-y", "autoremove", "--purge"),
+			})
 		}
 	}
 	if list, err := Output(ctx, "dpkg-query", "-W", "-f", "${db:Status-Abbrev} ${Package}\n"); err == nil {
@@ -98,8 +102,11 @@ func aptCleanup(ctx context.Context) []string {
 			}
 		}
 		if len(names) > 0 {
-			out = append(out, fmt.Sprintf("%s removed but config files left: %s  (sudo apt purge %s)",
-				plural(len(names), "package"), strings.Join(names, " "), strings.Join(names, " ")))
+			out = append(out, Cleanup{
+				Text:   fmt.Sprintf("%s removed but config files left: %s", plural(len(names), "package"), strings.Join(names, " ")),
+				Sudo:   true,
+				Action: Exec("apt purge", true, env, "apt-get", append([]string{"-y", "purge"}, names...)...),
+			})
 		}
 	}
 	return out
@@ -622,7 +629,7 @@ func contains(list []string, s string) bool {
 }
 
 // withCleanup adds a cleanup report to a check's result.
-func withCleanup(check func(context.Context, *config.Config) CheckResult, clean func(context.Context) []string) func(context.Context, *config.Config) CheckResult {
+func withCleanup(check func(context.Context, *config.Config) CheckResult, clean func(context.Context) []Cleanup) func(context.Context, *config.Config) CheckResult {
 	return func(ctx context.Context, cfg *config.Config) CheckResult {
 		r := check(ctx, cfg)
 		r.Cleanup = clean(ctx)
@@ -632,16 +639,19 @@ func withCleanup(check func(context.Context, *config.Config) CheckResult, clean 
 
 // nodeCleanup reports Node versions installed by nvm other than the one in use.
 // Upgrading with nvm leaves the previous version behind.
-func nodeCleanup(ctx context.Context) []string {
+func nodeCleanup(ctx context.Context) []Cleanup {
 	cur, _ := Output(ctx, "node", "--version")
 	entries, err := os.ReadDir(filepath.Join(nvmDir(), "versions", "node"))
 	if err != nil {
 		return nil
 	}
-	var out []string
+	var out []Cleanup
 	for _, e := range entries {
 		if v := e.Name(); e.IsDir() && v != cur {
-			out = append(out, fmt.Sprintf("old Node %s is still installed  (nvm uninstall %s)", v, v))
+			out = append(out, Cleanup{
+				Text:   "old Node " + v + " is still installed",
+				Action: Shell("nvm uninstall "+v, "nvm uninstall "+v, nvmPrelude+`nvm uninstall "$1"`, v),
+			})
 		}
 	}
 	return out

@@ -22,7 +22,7 @@ The full user guide is in [HELP.md](HELP.md). It is built into the binary: press
 | `docker` | `docker pull` for pulled images whose registry has a newer build (skips locally built images and `docker.exclude`). Off by default | |
 | custom | Your own `bash -c` commands from the config | optional |
 
-Each step also has a read-only **check**: APT's cached upgradable list, go.dev, `gup check`, `rustup check`, the crates.io sparse index, nodejs.org, the npm registry, `pnpm outdated -g`, `uv tool list --outdated`, `git fetch` for pyenv, `gh extension upgrade --dry-run`, and registry digests for Docker. Checks also report leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images), but never delete them.
+Each step also has a read-only **check**: APT's cached upgradable list, go.dev, `gup check`, `rustup check`, the crates.io sparse index, nodejs.org, the npm registry, `pnpm outdated -g`, `uv tool list --outdated`, `git fetch` for pyenv, `gh extension upgrade --dry-run`, and registry digests for Docker. Checks also report leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images). They are removed only when you ask: `d` in the TUI or `sysupdate clean`.
 
 Steps run one after another. A failing step doesn't stop the rest unless you turn on *Stop on first failure*.
 
@@ -57,9 +57,9 @@ This runs vet, tests and govulncheck, checks the tree is clean and creates the t
 Run `sysupdate`.
 
 - **Overview**: one row per step with its enabled checkbox, installed version, pending updates and last run result. The panel under the table shows the highlighted step's commands and the list of pending updates.
-  `space` toggle · `a` all/none · `u` select only outdated · `enter` run selected · `o` run only the highlighted step · `c`/`C` check all/this · `s` settings · `m` custom steps · `e` edit config · `l` logs · `?` help · `q` quit
+  `space` toggle · `a` all/none · `u` select only outdated · `enter` run selected · `o` run only the highlighted step · `c`/`C` check all/this · `d` clean up leftovers · `s` settings · `m` custom steps · `e` edit config · `l` logs · `?` help · `q` quit
 - **Run**: progress bar, status for each step, and live output that redraws `\r` progress lines in place. `↑/↓` view another step's output · `f` follow the running step · `X`/`ctrl+c` cancel (kills the process group) · `r` retry failed steps afterwards.
-- **Settings** (`s`): a [Huh](https://github.com/charmbracelet/huh) form for APT, Node, Go root, excluded crates and gup binaries, and general options.
+- **Settings** (`s`): one page with every setting (APT, Node, Go root, exclusions, general). Toggle with space, change choices with ←/→, edit text with enter. Changes save immediately.
 - **Custom steps** (`m`): add, edit, delete and reorder your own commands, with forms.
 - **Logs**: browse earlier run logs (`←/→`).
 
@@ -74,6 +74,7 @@ sysupdate run                    # enabled steps, plain output, exit 1 if any st
 sysupdate run --only apt,go
 sysupdate run --skip cargo --dry-run
 sysupdate check                  # what has updates
+sysupdate clean                  # remove leftovers (asks first; --yes, --dry-run, --only)
 sysupdate list                   # IDs, enabled, installed, versions, last run
 sysupdate config [path|init|edit]
 sysupdate logs [-n 2] [-list]

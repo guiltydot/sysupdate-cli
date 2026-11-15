@@ -79,6 +79,7 @@ type Model struct {
 	formReturn screen
 
 	customCursor int
+	set          settingsState
 
 	logs    []string
 	logIdx  int
@@ -134,8 +135,9 @@ type checkMsg struct {
 type editorDoneMsg struct{ err error }
 
 type sudoDoneMsg struct {
-	err  error
-	list []int
+	err   error
+	rows  []int
+	steps []*steps.Step
 }
 
 type tickMsg time.Time
@@ -263,7 +265,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setFlash("sudo authentication failed; run cancelled")
 			return m, nil
 		}
-		return m.startRun(msg.list)
+		return m.startRun(msg.rows, msg.steps)
 
 	case runEventMsg, runFinishedMsg:
 		return m.updateRunEvent(msg)
@@ -279,6 +281,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.screen == scrForm {
 			return m.updateForm(msg)
 		}
+		// Text being typed into a setting must not trigger shortcuts.
+		if m.screen == scrSettings && m.set.editing && !key.Matches(msg, keyForce) {
+			return m.updateSettings(msg)
+		}
 		if key.Matches(msg, keyForce) && (m.run == nil || m.run.done != nil) {
 			return m, tea.Quit
 		}
@@ -289,6 +295,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.screen {
 		case scrCustom:
 			return m.updateCustom(msg)
+		case scrSettings:
+			return m.updateSettings(msg)
 		case scrOverview:
 			return m.updateOverview(msg)
 		case scrRun:
@@ -342,6 +350,8 @@ func (m Model) View() string {
 		return m.viewRun()
 	case scrCustom:
 		return m.viewCustom()
+	case scrSettings:
+		return m.viewSettings()
 	case scrForm:
 		return m.viewForm()
 	case scrLogs:

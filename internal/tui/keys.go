@@ -25,7 +25,7 @@ var (
 
 type overviewKeyMap struct {
 	Up, Down, Top, Bottom, Toggle, All, Outdated, Run, RunOne, Check, CheckOne,
-	Settings, Custom, Edit, Logs, Help, Quit key.Binding
+	Clean, Settings, Custom, Edit, Logs, Help, Quit key.Binding
 }
 
 var overviewKeys = overviewKeyMap{
@@ -37,6 +37,7 @@ var overviewKeys = overviewKeyMap{
 	RunOne:   bind([]string{"o"}, "o", "run this"),
 	Check:    bind([]string{"c"}, "c", "check"),
 	CheckOne: bind([]string{"C"}, "C", "check this"),
+	Clean:    bind([]string{"d"}, "d", "clean up"),
 	Settings: bind([]string{"s"}, "s", "settings"),
 	Custom:   bind([]string{"m"}, "m", "custom steps"),
 	Edit:     bind([]string{"e"}, "e", "edit config"),
@@ -46,14 +47,14 @@ var overviewKeys = overviewKeyMap{
 }
 
 func (k overviewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Toggle, k.All, k.Outdated, k.Run, k.RunOne, k.Check, k.Settings, k.Custom, k.Logs, k.Help, k.Quit}
+	return []key.Binding{k.Toggle, k.All, k.Outdated, k.Run, k.RunOne, k.Check, k.Clean, k.Settings, k.Custom, k.Logs, k.Help, k.Quit}
 }
 
 func (k overviewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Top, k.Bottom},
 		{k.Toggle, k.All, k.Outdated},
-		{k.Run, k.RunOne, k.Check, k.CheckOne},
+		{k.Run, k.RunOne, k.Check, k.CheckOne, k.Clean},
 		{k.Settings, k.Custom, k.Edit, k.Logs, k.Help, k.Quit},
 	}
 }
@@ -122,6 +123,30 @@ func (k pagerKeyMap) ShortHelp() []key.Binding {
 }
 
 func (k pagerKeyMap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
+
+// ---- settings ----
+
+type settingsKeyMap struct {
+	Up, Down, Top, Bottom, Change, Left, Right, Back, Help key.Binding
+}
+
+var settingsKeys = settingsKeyMap{
+	Up:     bind([]string{"up", "k", "shift+tab"}, "↑/↓", "move"),
+	Down:   bind([]string{"down", "j", "tab"}, "↓", "down"),
+	Top:    keyTop,
+	Bottom: keyBottom,
+	Change: bind([]string{" ", "enter"}, "space/enter", "change"),
+	Left:   bind([]string{"left", "h"}, "←", "previous"),
+	Right:  bind([]string{"right", "l"}, "→", "next"),
+	Back:   bind([]string{"esc", "q", "s"}, "esc", "back"),
+	Help:   keyHelp,
+}
+
+func (k settingsKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Up, k.Change, k.Help, k.Back}
+}
+
+func (k settingsKeyMap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
 
 // ---- custom steps list ----
 

@@ -117,7 +117,7 @@ func dockerStep() *Step {
 }
 
 // dockerCleanup reports untagged images, which pulling a newer build leaves behind.
-func dockerCleanup(ctx context.Context) []string {
+func dockerCleanup(ctx context.Context) []Cleanup {
 	out, err := Output(ctx, "docker", "images", "--filter", "dangling=true", "--format", "{{.ID}} {{.Size}}")
 	if err != nil {
 		return nil
@@ -126,7 +126,10 @@ func dockerCleanup(ctx context.Context) []string {
 	if lines[0] == "" {
 		return nil
 	}
-	return []string{fmt.Sprintf("%s left untagged by newer pulls  (docker image prune)", plural(len(lines), "old image"))}
+	return []Cleanup{{
+		Text:   fmt.Sprintf("%s left untagged by newer pulls", plural(len(lines), "old image")),
+		Action: Exec("docker image prune", false, nil, "docker", "image", "prune", "-f"),
+	}}
 }
 
 // ---------- gh extensions ----------

@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/guiltydot/sysupdate-cli/internal/runner"
@@ -83,8 +84,10 @@ func (m Model) updateOverview(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m.requestRun([]int{m.cursor})
+	case key.Matches(k, km.Clean):
+		return m, m.confirmCleanup(m.cursor)
 	case key.Matches(k, km.Settings):
-		return m, m.openSettingsForm()
+		return m, m.openSettings()
 	case key.Matches(k, km.Custom):
 		m.screen = scrCustom
 	case key.Matches(k, km.Edit):
@@ -107,11 +110,45 @@ func (m Model) requestRun(list []int) (tea.Model, tea.Cmd) {
 	for _, i := range list {
 		sel = append(sel, m.rows[i].step)
 	}
+	return m.requestSteps(list, sel)
+}
+
+// requestSteps runs sel; rows[i] is the overview row sel[i] belongs to, which is
+// re-probed and re-checked afterwards. sudo is asked for first when needed.
+func (m Model) requestSteps(rows []int, sel []*steps.Step) (tea.Model, tea.Cmd) {
 	if runner.NeedsSudo(sel) && !runner.SudoCached() {
 		c := exec.Command("sh", "-c", `echo "sysupdate needs sudo for: $1"; sudo -v`, "sh", sudoNames(sel))
-		return m, tea.ExecProcess(c, func(err error) tea.Msg { return sudoDoneMsg{err: err, list: list} })
+		return m, tea.ExecProcess(c, func(err error) tea.Msg { return sudoDoneMsg{err: err, rows: rows, steps: sel} })
 	}
-	return m.startRun(list)
+	return m.startRun(rows, sel)
+}
+
+// confirmCleanup asks before removing the highlighted step's leftovers.
+func (m *Model) confirmCleanup(i int) tea.Cmd {
+	r := m.rows[i]
+	if !r.checked || len(r.check.Cleanup) == 0 {
+		m.setFlash("nothing to clean up for " + r.step.Name + " (press C to check it)")
+		return nil
+	}
+	items := r.check.Cleanup
+	var desc []string
+	for _, c := range items {
+		desc = append(desc, "• "+c.Text+"\n    $ "+c.Action.Display)
+	}
+	ok := true
+	f := huh.NewForm(huh.NewGroup(
+		huh.NewConfirm().Title("Remove these?").Description(strings.Join(desc, "\n")).
+			Affirmative("Remove").Negative("Cancel").Value(&ok),
+	))
+	return m.showForm("Clean up "+r.step.Name, f, func(m *Model) tea.Cmd {
+		if !ok {
+			m.setFlash("nothing removed")
+			return nil
+		}
+		nm, cmd := m.requestSteps([]int{i}, []*steps.Step{steps.CleanupStep(r.step, items)})
+		*m = nm.(Model)
+		return cmd
+	})
 }
 
 func sudoNames(list []*steps.Step) string {
@@ -266,9 +303,9 @@ func (m Model) viewDetail(r *row, w, h int) string {
 		}
 	}
 	if r.checked && len(r.check.Cleanup) > 0 {
-		lines = append(lines, "", sHeader.Render("Could be removed (sysupdate won't do it):"))
-		for _, d := range r.check.Cleanup {
-			lines = append(lines, "  "+sWarn.Render("• ")+d)
+		lines = append(lines, "", sHeader.Render("Could be removed")+sMuted.Render(" (press ")+sKey.Render("d")+sMuted.Render(" to remove)"))
+		for _, c := range r.check.Cleanup {
+			lines = append(lines, "  "+sWarn.Render("• ")+c.Text+"  "+sMuted.Render("$ "+c.Action.Display))
 		}
 	}
 	if st, ok := m.st.Steps[r.step.ID]; ok && !st.LastOK.IsZero() && !st.OK {

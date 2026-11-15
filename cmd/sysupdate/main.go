@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -49,6 +50,10 @@ Usage:
       --all                     run every installed step, ignoring the config
       --dry-run                 print the commands instead of running them
   sysupdate check               show which steps have updates available
+  sysupdate clean [flags]       remove leftovers the checks found (asks first)
+      --only a,b                just these step IDs
+      --yes                     do not ask
+      --dry-run                 only list them
   sysupdate list                list steps, IDs, enabled state and versions
   sysupdate config [path|init|edit]
                                 show the config, print its path, write defaults, or open $EDITOR
@@ -80,6 +85,8 @@ func main() {
 	switch args[0] {
 	case "run":
 		os.Exit(cmdRun(cfg, args[1:]))
+	case "clean":
+		os.Exit(cmdClean(cfg, args[1:]))
 	case "check":
 		cmdCheck(cfg)
 	case "list", "ls":
@@ -168,7 +175,12 @@ func cmdRun(cfg *config.Config, args []string) int {
 		}
 		return 0
 	}
+	return runAndReport(ctx, cfg, list)
+}
 
+// runAndReport asks for sudo if needed, runs list with streamed output and prints
+// a summary table. It returns the exit status.
+func runAndReport(ctx context.Context, cfg *config.Config, list []*steps.Step) int {
 	if runner.NeedsSudo(list) && !runner.SudoCached() {
 		cmd := exec.Command("sudo", "-v")
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -290,8 +302,8 @@ func stepsNeedingSudo(list []*steps.Step) string {
 	return strings.Join(n, ", ")
 }
 
-func cmdCheck(cfg *config.Config) {
-	all := steps.All(cfg)
+// runChecks runs the checks of all steps in parallel.
+func runChecks(cfg *config.Config, all []*steps.Step) []steps.CheckResult {
 	res := make([]steps.CheckResult, len(all))
 	var wg sync.WaitGroup
 	for i, s := range all {
@@ -311,6 +323,12 @@ func cmdCheck(cfg *config.Config) {
 		}()
 	}
 	wg.Wait()
+	return res
+}
+
+func cmdCheck(cfg *config.Config) {
+	all := steps.All(cfg)
+	res := runChecks(cfg, all)
 	var rows [][]string
 	outdated := 0
 	var cleanup []string
@@ -322,7 +340,7 @@ func cmdCheck(cfg *config.Config) {
 			detail += "\n" + stMuted.Render("• "+strings.Join(r.Details, "\n• "))
 		}
 		for _, c := range r.Cleanup {
-			cleanup = append(cleanup, s.Name+": "+c)
+			cleanup = append(cleanup, s.Name+": "+c.Text+"  "+stMuted.Render("$ "+c.Action.Display))
 		}
 		if r.State == steps.CheckOutdated {
 			outdated++
@@ -350,11 +368,61 @@ func cmdCheck(cfg *config.Config) {
 		fmt.Println(stWarn.Render(fmt.Sprintf("%d step(s) have updates. Run `sysupdate` to install them.", outdated)))
 	}
 	if len(cleanup) > 0 {
-		fmt.Println("\n" + stStep.Render("Could be removed") + stMuted.Render(" (sysupdate never removes these itself)"))
+		fmt.Println("\n" + stStep.Render("Could be removed") + stMuted.Render(" (remove them with `sysupdate clean`)"))
 		for _, c := range cleanup {
 			fmt.Println(stWarn.Render("• ") + c)
 		}
 	}
+}
+
+// cmdClean removes the leftovers the checks found, after asking.
+func cmdClean(cfg *config.Config, args []string) int {
+	fs := flag.NewFlagSet("clean", flag.ExitOnError)
+	only := fs.String("only", "", "comma-separated step IDs to clean up")
+	yes := fs.Bool("yes", false, "do not ask before removing")
+	dry := fs.Bool("dry-run", false, "only list what would be removed")
+	_ = fs.Parse(args)
+	onlySet := splitIDs(*only)
+
+	var all []*steps.Step
+	for _, s := range steps.All(cfg) {
+		if (len(onlySet) == 0 || onlySet[s.ID]) && s.Available() {
+			all = append(all, s)
+		}
+	}
+	fmt.Println(stMuted.Render("Looking for leftovers…"))
+	res := runChecks(cfg, all)
+	var list []*steps.Step
+	for i, s := range all {
+		if items := res[i].Cleanup; len(items) > 0 {
+			fmt.Println("\n" + stStep.Render("▸ "+s.Name))
+			for _, c := range items {
+				fmt.Println(stWarn.Render("• ") + c.Text)
+				fmt.Println(stCmd.Render("  $ " + c.Action.Display))
+			}
+			list = append(list, steps.CleanupStep(s, items))
+		}
+	}
+	if len(list) == 0 {
+		fmt.Println(stOK.Render("Nothing to clean up."))
+		return 0
+	}
+	if *dry {
+		return 0
+	}
+	if !*yes {
+		if !isTTY() {
+			fmt.Fprintln(os.Stderr, "\nnot a terminal: pass --yes to remove these")
+			return 2
+		}
+		fmt.Print("\nRemove all of these? [y/N] ")
+		answer, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		if a := strings.ToLower(strings.TrimSpace(answer)); a != "y" && a != "yes" {
+			fmt.Println("Nothing removed.")
+			return 0
+		}
+	}
+	return runAndReport(context.Background(), cfg, list)
 }
 
 func cmdList(cfg *config.Config) {
