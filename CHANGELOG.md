@@ -10,10 +10,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-15
+
 ### Added
 
 - Leftovers found by the checks can be removed: `d` on a step in the TUI, or `sysupdate clean` (`--yes`, `--dry-run`, `--only`). Both show the commands and ask first.
-
 - `make release` picks the next version from the commits since the last tag (Conventional Commits), dates the changelog, commits and tags. `make next-version` previews it.
 - GitHub Actions: CI (vet, race tests, govulncheck, shellcheck) on every push, and a release workflow that publishes Linux binaries and changelog notes when a version tag is pushed.
 
@@ -37,5 +38,6 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guiltydot/sysupdate-cli/releases/tag/v0.1.0
