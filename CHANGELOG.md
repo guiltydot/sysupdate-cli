@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The Go step now reports a failed write of the downloaded archive (for example a full disk) instead of going on to verify a partial file.
+
 ## [0.2.1] - 2026-11-15
 
 ### Fixed

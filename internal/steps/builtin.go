@@ -451,7 +451,7 @@ func useDefaultNode(ctx context.Context) {
 		return
 	}
 	bin := filepath.Dir(firstLine(out))
-	os.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	_ = os.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 // ---------- pnpm ----------

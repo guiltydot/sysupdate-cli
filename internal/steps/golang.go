@@ -150,10 +150,14 @@ func download(ctx context.Context, out io.Writer, url, dst, wantSHA string) erro
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 	h := sha256.New()
 	pw := &progressWriter{out: out, total: resp.ContentLength, last: -1}
-	if _, err := io.Copy(io.MultiWriter(f, h, pw), resp.Body); err != nil {
+	_, err = io.Copy(io.MultiWriter(f, h, pw), resp.Body)
+	// A failed Close can mean the file was not fully written (disk full).
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
 		return err
 	}
 	fmt.Fprintln(out)

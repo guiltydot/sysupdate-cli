@@ -40,11 +40,7 @@ type setting struct {
 func joinList(l []string) string { return strings.Join(l, ", ") }
 
 func splitList(s string) []string {
-	out := []string{}
-	for _, f := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ' ' || r == '\n' }) {
-		out = append(out, f)
-	}
-	return out
+	return append([]string{}, strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ' ' || r == '\n' })...)
 }
 
 func listSetting(section, title, desc string, field func(c *config.Config) *[]string) setting {
@@ -138,10 +134,10 @@ func (m Model) updateSettings(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 	st := &m.set
 	s := settingsList[st.cursor]
 	if st.editing {
-		switch {
-		case k.Type == tea.KeyEsc:
+		switch k.Type {
+		case tea.KeyEsc:
 			st.editing, st.err = false, ""
-		case k.Type == tea.KeyEnter:
+		case tea.KeyEnter:
 			if err := s.set(m.cfg, st.input.Value()); err != nil {
 				st.err = err.Error()
 				return m, nil

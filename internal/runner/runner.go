@@ -85,7 +85,7 @@ func Run(ctx context.Context, cfg *config.Config, list []*steps.Step, emit func(
 	if logFile != nil {
 		defer logFile.Close()
 	}
-	logw := io.Writer(io.Discard)
+	logw := io.Discard
 	if logFile != nil {
 		logw = logFile
 	}

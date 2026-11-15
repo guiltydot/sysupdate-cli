@@ -378,7 +378,7 @@ func (m Model) openEditor() tea.Cmd {
 			ed = "vi"
 		}
 	}
-	c := exec.Command("sh", "-c", ed+` "$1"`, "sh", config.Path())
+	c := exec.Command("sh", "-c", ed+` ""`, "sh", config.Path()) //nolint:gosec //  may hold arguments, run through sh like git does; the path is passed as
 	return tea.ExecProcess(c, func(err error) tea.Msg { return editorDoneMsg{err} })
 }
 

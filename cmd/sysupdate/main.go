@@ -501,7 +501,7 @@ func cmdConfig(cfg *config.Config, args []string) {
 		if ed == "" {
 			ed = "nano"
 		}
-		c := exec.Command("sh", "-c", ed+` "$1"`, "sh", config.Path())
+		c := exec.Command("sh", "-c", ed+` ""`, "sh", config.Path()) //nolint:gosec //  may hold arguments, run through sh like git does; the path is passed as
 		c.Stdin, c.Stdout, c.Stderr = os.Stdin, os.Stdout, os.Stderr
 		if err := c.Run(); err != nil {
 			fatal(err)
@@ -516,7 +516,7 @@ func cmdConfig(cfg *config.Config, args []string) {
 			fmt.Println("# path:", config.Path())
 			return
 		}
-		os.Stdout.Write(b)
+		_, _ = os.Stdout.Write(b)
 	default:
 		fatal(fmt.Errorf("unknown config subcommand %q", sub))
 	}

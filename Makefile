@@ -17,8 +17,12 @@ test:
 vet:
 	go vet ./...
 
-# Runs vet, tests and govulncheck (when installed).
+lint:
+	golangci-lint run ./...
+
+# Runs vet, tests, golangci-lint and govulncheck (the last two when installed).
 check: vet test
+	@if command -v golangci-lint >/dev/null; then golangci-lint run ./...; else echo "golangci-lint not installed, skipping"; fi
 	@if command -v govulncheck >/dev/null; then govulncheck ./...; else echo "govulncheck not installed, skipping"; fi
 
 # make release picks the next version from the commits since the last tag
@@ -35,4 +39,4 @@ clean:
 	go clean
 	$(RM) sysupdate
 
-.PHONY: build install test vet check release next-version clean
+.PHONY: build install test vet lint check release next-version clean

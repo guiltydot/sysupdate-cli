@@ -23,6 +23,10 @@ jobs:
         run: go test -race ./...
       - name: Build
         run: go build ./cmd/sysupdate
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.15.0
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - name: shellcheck

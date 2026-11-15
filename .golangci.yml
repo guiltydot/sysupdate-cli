@@ -1,0 +1,29 @@
+version: "2"
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose
+    - gosec
+    - misspell
+    - unconvert
+  settings:
+    gosec:
+      excludes:
+        - G204 # running commands is what an updater does; argv is built from fixed commands and the user's own config
+        - G304 # paths are sysupdate's own config, state, log and temp files
+    errcheck:
+      exclude-functions:
+        # Writes to the terminal or a run log; a failure there has no useful recovery.
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        # Closing response bodies and files that were only read.
+        - (io.Closer).Close
+        - (*os.File).Close
+        - os.RemoveAll
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -151,10 +151,10 @@ func RunCmd(ctx context.Context, out io.Writer, env []string, argv ...string) er
 	case <-ctx.Done():
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 		select {
-		case <-done:
+		case <-done: //nolint:errcheck // cancelled: the exit error is replaced by ctx.Err()
 		case <-time.After(5 * time.Second):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
+			<-done //nolint:errcheck // same as above
 		}
 		return ctx.Err()
 	}
