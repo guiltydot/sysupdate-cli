@@ -2,16 +2,14 @@ package steps
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/guiltydot/sysupdate-cli/internal/config"
+	"github.com/guiltydot/sysupdate-cli/internal/fetch"
 )
 
 type goRelease struct {
@@ -115,7 +113,7 @@ func updateGo(ctx context.Context, out io.Writer, root string) error {
 	}
 	defer os.RemoveAll(tmp)
 	file := filepath.Join(tmp, latest.file)
-	if err := download(ctx, out, "https://go.dev/dl/"+latest.file, file, latest.sha); err != nil {
+	if _, err := fetch.Download(ctx, out, "https://go.dev/dl/"+latest.file, file, latest.sha, 0); err != nil {
 		fmt.Fprintln(out, "Download or checksum verification failed; existing install left untouched.")
 		return err
 	}
@@ -130,58 +128,4 @@ func updateGo(ctx context.Context, out io.Writer, root string) error {
 	v, _ := Output(ctx, filepath.Join(root, "bin", "go"), "version")
 	fmt.Fprintf(out, "Installed %s\n", v)
 	return nil
-}
-
-// download fetches url into dst, printing progress and verifying the SHA256.
-func download(ctx context.Context, out io.Writer, url, dst, wantSHA string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s: %s", url, resp.Status)
-	}
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	h := sha256.New()
-	pw := &progressWriter{out: out, total: resp.ContentLength, last: -1}
-	_, err = io.Copy(io.MultiWriter(f, h, pw), resp.Body)
-	// A failed Close can mean the file was not fully written (disk full).
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(out)
-	if got := hex.EncodeToString(h.Sum(nil)); got != wantSHA {
-		return fmt.Errorf("sha256 mismatch: got %s, want %s", got, wantSHA)
-	}
-	return nil
-}
-
-type progressWriter struct {
-	out   io.Writer
-	total int64
-	n     int64
-	last  int64
-}
-
-func (p *progressWriter) Write(b []byte) (int, error) {
-	p.n += int64(len(b))
-	if p.total > 0 {
-		pct := p.n * 100 / p.total
-		if pct != p.last {
-			p.last = pct
-			fmt.Fprintf(p.out, "\rDownloading %d%% (%.1f / %.1f MB)", pct, float64(p.n)/1e6, float64(p.total)/1e6)
-		}
-	}
-	return len(b), nil
 }

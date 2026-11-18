@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Built-in `sysupdate` step and `sysupdate self-update` command to update Release binaries from GitHub, with checksum verification and build attestation verification through `gh` when it is installed and logged in.
+
 ## [0.4.0] - 2026-11-18
 
 ### Added

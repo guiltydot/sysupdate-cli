@@ -30,6 +30,7 @@ The full user guide is in [HELP.md](HELP.md). It is built into the binary: press
 | `claude` | `claude update` | |
 | `gh-ext` | `gh extension upgrade --all` (gh itself updates through APT) | |
 | `docker` | `docker pull` for pulled images whose registry has a newer build (skips locally built images and `docker.exclude`). Off by default | |
+| `sysupdate` | Latest GitHub Release; downloads, checksums and optionally verifies the binary with `gh`, then replaces the executable. Runs after the other built-in steps. Skipped for local builds and `go install` binaries (in GOBIN or GOPATH/bin) | |
 | custom | Your own `bash -c` commands from the config | optional |
 
 Each step also has a read-only **check**: a simulated APT upgrade (phased updates count as held back), go.dev, `gup check`, `rustup check`, the crates.io sparse index, nodejs.org, the npm registry, `pnpm outdated -g`, `uv tool list --outdated`, `git fetch` for pyenv, `pip list --outdated` for pip, `gh extension upgrade --dry-run`, and registry digests for Docker. Checks also report leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images). They are removed only when you ask: `d` in the TUI or `sysupdate clean`.
@@ -45,6 +46,7 @@ go install github.com/guiltydot/sysupdate-cli/cmd/sysupdate@latest
 ```
 
 Prebuilt Linux binaries (amd64, arm64) with checksums are attached to each [GitHub Release](https://github.com/guiltydot/sysupdate-cli/releases).
+Binaries installed from Releases update themselves with `sysupdate self-update` or the built-in `sysupdate` step. Local builds and `go install` installs are not replaced automatically; use `gup` for `go install` binaries.
 
 Or from a clone:
 
@@ -102,6 +104,8 @@ sysupdate clean                  # remove leftovers (asks first; --yes, --dry-ru
 sysupdate list                   # IDs, enabled, installed, versions, last run
 sysupdate config [path|init|edit]
 sysupdate logs [-n 2] [-list]
+sysupdate self-update [--check] [--force]
+sysupdate version [--check]
 ```
 
 ## Config

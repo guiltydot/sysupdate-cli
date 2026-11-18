@@ -19,8 +19,10 @@ import (
 	"github.com/charmbracelet/x/term"
 
 	"github.com/guiltydot/sysupdate-cli"
+	"github.com/guiltydot/sysupdate-cli/internal/buildinfo"
 	"github.com/guiltydot/sysupdate-cli/internal/config"
 	"github.com/guiltydot/sysupdate-cli/internal/runner"
+	"github.com/guiltydot/sysupdate-cli/internal/selfupdate"
 	"github.com/guiltydot/sysupdate-cli/internal/state"
 	"github.com/guiltydot/sysupdate-cli/internal/steps"
 	"github.com/guiltydot/sysupdate-cli/internal/tui"
@@ -32,12 +34,14 @@ var version = ""
 
 func init() {
 	if version != "" {
+		buildinfo.Version = version
 		return
 	}
 	version = "dev"
 	if bi, ok := debug.ReadBuildInfo(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
 		version = bi.Main.Version
 	}
+	buildinfo.Version = version
 }
 
 const usage = `sysupdate — update the dev environment (APT, Go, gup, Rust, Cargo, Node, pnpm, uv, pyenv, pip, Claude Code, custom steps)
@@ -60,7 +64,8 @@ Usage:
                                 show the config, print its path, write defaults, or open $EDITOR
   sysupdate logs [-n N]         print the most recent run log (or the N-th newest)
   sysupdate help [--full]       this summary, or the full manual (also ? in the TUI)
-  sysupdate version
+  sysupdate self-update [--check] [--force]
+  sysupdate version [--check]
 
 Exit status of run: 0 all OK, 1 a step failed, 2 usage/config error, 130 cancelled.
 `
@@ -81,7 +86,7 @@ func main() {
 		}
 		return
 	}
-	if cfgErr != nil && args[0] != "config" {
+	if cfgErr != nil && args[0] != "config" && args[0] != "self-update" && args[0] != "version" {
 		fatal(cfgErr)
 	}
 	switch args[0] {
@@ -104,8 +109,18 @@ func main() {
 		cmdConfig(cfg, args[1:])
 	case "logs", "log":
 		cmdLogs(args[1:])
+	case "self-update":
+		os.Exit(cmdSelfUpdate(args[1:]))
 	case "version", "--version":
-		fmt.Println("sysupdate", version)
+		if len(args) > 1 && args[1] == "--check" {
+			latest, err := selfupdate.Latest(context.Background())
+			if err != nil {
+				fatal(err)
+			}
+			printSelfCheck(latest)
+			return
+		}
+		fmt.Println("sysupdate", buildinfo.Version)
 	case "help", "-h", "--help":
 		if len(args) > 1 && args[1] == "--full" {
 			fmt.Print(sysupdate.Help)
@@ -336,6 +351,54 @@ func runChecks(cfg *config.Config, all []*steps.Step) []steps.CheckResult {
 	}
 	wg.Wait()
 	return res
+}
+
+func cmdSelfUpdate(args []string) int {
+	fs := flag.NewFlagSet("self-update", flag.ExitOnError)
+	checkOnly := fs.Bool("check", false, "only check for a newer release")
+	force := fs.Bool("force", false, "also replace a local build with the latest release")
+	_ = fs.Parse(args)
+
+	latest, err := selfupdate.Latest(context.Background())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "sysupdate: check failed:", err)
+		return 1
+	}
+	if *checkOnly {
+		printSelfCheck(latest)
+		return 0
+	}
+	switch buildinfo.Classify(buildinfo.Version) {
+	case buildinfo.GoInstall:
+		fmt.Println("installed with go install: the gup step updates it")
+		return 0
+	case buildinfo.Local:
+		if !*force {
+			fmt.Printf("local build (%s), not updated; use --force to replace it with %s\n", buildinfo.Version, latest.TagName)
+			return 0
+		}
+		// A local build's version says little about its age, so --force replaces it regardless.
+	default:
+		if !buildinfo.Newer(latest.TagName, buildinfo.Version) {
+			fmt.Printf("sysupdate is up to date (%s).\n", buildinfo.Version)
+			return 0
+		}
+	}
+	if err := selfupdate.Apply(context.Background(), os.Stdout, latest); err != nil {
+		fmt.Fprintln(os.Stderr, "sysupdate:", err)
+		return 1
+	}
+	fmt.Printf("sysupdate %s → %s. Restart sysupdate to use the new version.\n", buildinfo.Version, latest.TagName)
+	return 0
+}
+
+// printSelfCheck prints the installed version next to the latest release.
+func printSelfCheck(latest selfupdate.Release) {
+	if buildinfo.Newer(latest.TagName, buildinfo.Version) {
+		fmt.Printf("sysupdate %s → %s available  %s\n", buildinfo.Version, latest.TagName, latest.HTMLURL)
+		return
+	}
+	fmt.Printf("sysupdate %s is up to date (latest release %s)\n", buildinfo.Version, latest.TagName)
 }
 
 func cmdCheck(cfg *config.Config) {

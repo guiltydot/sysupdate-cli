@@ -21,6 +21,7 @@ A failing step never aborts the others (unless you turn on *Stop on first failur
 | **Claude Code** (`claude`) | `claude update`. |
 | **gh extensions** (`gh-ext`) | `gh extension upgrade --all`. gh itself is an APT package, so the APT step updates it. |
 | **Docker images** (`docker`, off by default) | `docker pull` for each image you pulled from a registry. Locally built images and those in `docker.exclude` are skipped. |
+| **sysupdate** (`sysupdate`) | Checks GitHub Releases for sysupdate itself, then verifies and replaces a Release binary. It runs after the other built-in steps and is skipped for local builds and for `go install` binaries (in GOBIN or GOPATH/bin). If the binary's directory is not writable, the run says so instead of failing; use `sudo sysupdate self-update`. |
 | **Custom steps** | Your own shell commands, run after the built-in steps. Add them on the Custom steps screen (`m`) or in the config file. |
 
 Steps whose tool isn't installed are shown as *not installed* and skipped.
@@ -42,6 +43,7 @@ Each built-in step can look for pending updates without changing anything:
 - **Claude Code**: the npm registry
 - **gh extensions**: `gh extension upgrade --all --dry-run`
 - **Docker**: compares each image's digest with its registry (`docker buildx imagetools inspect`)
+- **sysupdate**: checks the latest GitHub Release
 
 Checks run when the app opens (you can turn this off in Settings) and again after each run.
 
@@ -158,6 +160,8 @@ sysupdate list                list IDs, enabled state, versions and last runs
 sysupdate config [path|init|edit]
 sysupdate logs [-n N] [-list]
 sysupdate help
+sysupdate self-update [--check] [--force]
+sysupdate version [--check]
 ```
 
 `run` exits with 0 if everything succeeded, 1 if a step failed, 2 on a usage or config error, and 130 if it was cancelled.
