@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-18
+
 ### Fixed
 
 - `self-update` and `version --check` no longer report a git-describe build such as `v0.4.0-3-gabc1234` as older than `v0.4.0`, so `--force` is no longer suggested for a downgrade.
@@ -83,7 +85,8 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/guiltydot/sysupdate-cli/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.3...v0.3.0
