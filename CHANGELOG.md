@@ -10,6 +10,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- pip step (on by default): for each pyenv Python, upgrades pip and the top-level packages installed with it. `pip.exclude` (also in Settings) lists packages to leave alone.
+
+### Fixed
+
+- The Cargo check no longer fails for crates installed at a prerelease version (for example one that has only alpha releases). It now compares against newer prereleases too, and the update asks cargo for `>=` the installed version.
+
 ## [0.3.0] - 2026-11-15
 
 ### Added

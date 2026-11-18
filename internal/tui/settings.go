@@ -86,6 +86,8 @@ var settingsList = []setting{
 		func(c *config.Config) *[]string { return &c.Cargo.Exclude }),
 	listSetting("Exclusions", "Go binaries gup never updates", "Comma-separated binary names from $GOBIN.",
 		func(c *config.Config) *[]string { return &c.Gup.Exclude }),
+	listSetting("Exclusions", "pip packages never upgraded", "Comma-separated package names (pip itself is always upgraded).",
+		func(c *config.Config) *[]string { return &c.Pip.Exclude }),
 	listSetting("Exclusions", "Docker images never pulled", "Comma-separated, as repo:tag or just repo.",
 		func(c *config.Config) *[]string { return &c.Docker.Exclude }),
 

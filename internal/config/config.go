@@ -19,6 +19,7 @@ type Config struct {
 	Go      GoConfig      `yaml:"go"`
 	Cargo   CargoConfig   `yaml:"cargo"`
 	Gup     GupConfig     `yaml:"gup"`
+	Pip     PipConfig     `yaml:"pip"`
 	Docker  DockerConfig  `yaml:"docker"`
 	Node    NodeConfig    `yaml:"node"`
 	General GeneralConfig `yaml:"general"`
@@ -47,6 +48,10 @@ type DockerConfig struct {
 
 type GupConfig struct {
 	Exclude []string `yaml:"exclude"` // binaries in $GOBIN that gup leaves alone
+}
+
+type PipConfig struct {
+	Exclude []string `yaml:"exclude"` // packages the pip step never upgrades
 }
 
 type NodeConfig struct {

@@ -26,12 +26,13 @@ The full user guide is in [HELP.md](HELP.md). It is built into the binary: press
 | `pnpm` | `pnpm self-update`, `pnpm update -g` | |
 | `uv` | `uv self update`, `uv tool upgrade --all` | |
 | `pyenv` | `pyenv update` if the plugin exists, else `git pull --ff-only` | |
+| `pip` | For each pyenv Python: `pip install --upgrade pip`, then the packages you installed (top-level only, skips `pip.exclude`). Virtualenvs and the system Python are left alone | |
 | `claude` | `claude update` | |
 | `gh-ext` | `gh extension upgrade --all` (gh itself updates through APT) | |
 | `docker` | `docker pull` for pulled images whose registry has a newer build (skips locally built images and `docker.exclude`). Off by default | |
 | custom | Your own `bash -c` commands from the config | optional |
 
-Each step also has a read-only **check**: a simulated APT upgrade (phased updates count as held back), go.dev, `gup check`, `rustup check`, the crates.io sparse index, nodejs.org, the npm registry, `pnpm outdated -g`, `uv tool list --outdated`, `git fetch` for pyenv, `gh extension upgrade --dry-run`, and registry digests for Docker. Checks also report leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images). They are removed only when you ask: `d` in the TUI or `sysupdate clean`.
+Each step also has a read-only **check**: a simulated APT upgrade (phased updates count as held back), go.dev, `gup check`, `rustup check`, the crates.io sparse index, nodejs.org, the npm registry, `pnpm outdated -g`, `uv tool list --outdated`, `git fetch` for pyenv, `pip list --outdated` for pip, `gh extension upgrade --dry-run`, and registry digests for Docker. Checks also report leftovers worth removing (unused APT packages, leftover package configs, old nvm Node versions, untagged Docker images). They are removed only when you ask: `d` in the TUI or `sysupdate clean`.
 
 Steps run one after another. A failing step doesn't stop the rest unless you turn on *Stop on first failure*.
 

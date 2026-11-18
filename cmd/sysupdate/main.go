@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-const usage = `sysupdate — update the dev environment (APT, Go, gup, Rust, Cargo, Node, pnpm, uv, pyenv, Claude Code, custom steps)
+const usage = `sysupdate — update the dev environment (APT, Go, gup, Rust, Cargo, Node, pnpm, uv, pyenv, pip, Claude Code, custom steps)
 
 Usage:
   sysupdate                     open the interactive TUI

@@ -248,7 +248,7 @@ func outdated(summary string, details ...string) CheckResult {
 func All(cfg *config.Config) []*Step {
 	list := []*Step{
 		aptStep(), goStep(), gupStep(), rustupStep(), cargoStep(), nodeStep(),
-		pnpmStep(), uvStep(), pyenvStep(), claudeStep(), ghExtStep(), dockerStep(),
+		pnpmStep(), uvStep(), pyenvStep(), pipStep(), claudeStep(), ghExtStep(), dockerStep(),
 	}
 	for _, c := range cfg.Custom {
 		list = append(list, customStep(c))

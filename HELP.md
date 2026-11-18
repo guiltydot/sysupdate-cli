@@ -17,6 +17,7 @@ A failing step never aborts the others (unless you turn on *Stop on first failur
 | **pnpm + globals** (`pnpm`) | `pnpm self-update`, then `pnpm update -g`. |
 | **uv + tools** (`uv`) | `uv self update`, then `uv tool upgrade --all`. |
 | **pyenv + plugins** (`pyenv`) | `pyenv update` if the plugin is present, otherwise `git pull --ff-only` in `~/.pyenv`. |
+| **pip packages** (`pip`) | For each Python pyenv installed: upgrades pip, then the packages you installed with pip. Only top-level packages are upgraded; pip updates their dependencies when the new version needs it. Packages in `pip.exclude` are skipped. Virtualenvs and the system Python (managed by APT) are left alone. |
 | **Claude Code** (`claude`) | `claude update`. |
 | **gh extensions** (`gh-ext`) | `gh extension upgrade --all`. gh itself is an APT package, so the APT step updates it. |
 | **Docker images** (`docker`, off by default) | `docker pull` for each image you pulled from a registry. Locally built images and those in `docker.exclude` are skipped. |
@@ -37,6 +38,7 @@ Each built-in step can look for pending updates without changing anything:
 - **pnpm**: the npm registry and `pnpm outdated -g`
 - **uv**: `uv self update --dry-run` and `uv tool list --outdated`
 - **pyenv**: `git fetch`
+- **pip**: `pip list --outdated --not-required` for each pyenv Python
 - **Claude Code**: the npm registry
 - **gh extensions**: `gh extension upgrade --all --dry-run`
 - **Docker**: compares each image's digest with its registry (`docker buildx imagetools inspect`)
@@ -177,6 +179,8 @@ cargo:
   exclude: [some-crate]
 gup:
   exclude: [some-binary]
+pip:
+  exclude: [some-package]  # pip itself is always upgraded
 docker:
   exclude: [postgres]     # repo or repo:tag; the docker step is off by default
 node:
