@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-18
+
 ### Added
 
 - pip step (on by default): for each pyenv Python, upgrades pip and the top-level packages installed with it. `pip.exclude` (also in Settings) lists packages to leave alone.
@@ -71,7 +73,8 @@ All notable changes to this project are documented here. The format follows
 - Plain CLI: `run`, `check`, `list`, `config`, `logs`, `help`, `version`, styled with Lip Gloss.
 - Run history and per-run logs in `~/.local/state/sysupdate`.
 
-[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/guiltydot/sysupdate-cli/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/guiltydot/sysupdate-cli/compare/v0.2.1...v0.2.2
