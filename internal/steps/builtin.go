@@ -11,7 +11,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/guiltydot/sysupdate-cli/internal/buildinfo"
 	"github.com/guiltydot/sysupdate-cli/internal/config"
+	"github.com/guiltydot/sysupdate-cli/internal/selfupdate"
 )
 
 func home() string { h, _ := os.UserHomeDir(); return h }
@@ -623,6 +625,71 @@ func claudeStep() *Step {
 			return []Action{Exec("claude update", false, nil, "claude", "update")}, nil
 		},
 	}
+}
+
+// ---------- sysupdate ----------
+
+// selfStep updates a Release binary of sysupdate. It is Available only for
+// Release binaries, so local builds and `go install` binaries are skipped.
+func selfStep() *Step {
+	return &Step{
+		ID: "sysupdate", Name: "sysupdate", DefaultOn: true,
+		Description: "Updates sysupdate itself from the latest GitHub Release.",
+		Available: func() bool {
+			return buildinfo.Classify(buildinfo.Version) == buildinfo.Release
+		},
+		Version: func(context.Context, *config.Config) string {
+			return buildinfo.Version
+		},
+		Check: func(ctx context.Context, _ *config.Config) CheckResult {
+			latest, err := selfupdate.Latest(ctx)
+			if err != nil {
+				return errResult(err)
+			}
+			if !buildinfo.Newer(latest.TagName, buildinfo.Version) {
+				return upToDate()
+			}
+			details := []string{latest.HTMLURL}
+			if err := selfWritable(); err != nil {
+				details = append(details, err.Error())
+			}
+			return outdated(buildinfo.Version+" → "+latest.TagName, details...)
+		},
+		Plan: func(ctx context.Context, _ *config.Config) ([]Action, error) {
+			return []Action{{
+				Label:   "update sysupdate",
+				Display: "download GitHub release → verify checksum → replace binary",
+				Run: func(ctx context.Context, out io.Writer) error {
+					latest, err := selfupdate.Latest(ctx)
+					if err != nil {
+						return err
+					}
+					if !buildinfo.Newer(latest.TagName, buildinfo.Version) {
+						fmt.Fprintf(out, "sysupdate is up to date (%s).\n", buildinfo.Version)
+						return nil
+					}
+					// Without write access every run would fail; say what to do instead.
+					if err := selfWritable(); err != nil {
+						fmt.Fprintf(out, "sysupdate %s is available, but %v\n", latest.TagName, err)
+						return nil
+					}
+					if err := selfupdate.Apply(ctx, out, latest); err != nil {
+						return err
+					}
+					fmt.Fprintf(out, "sysupdate %s → %s. Restart sysupdate to use the new version.\n", buildinfo.Version, latest.TagName)
+					return nil
+				},
+			}}, nil
+		},
+	}
+}
+
+func selfWritable() error {
+	target, err := selfupdate.Target()
+	if err != nil {
+		return err
+	}
+	return selfupdate.CheckWritable(target)
 }
 
 // ---------- custom ----------

@@ -250,6 +250,7 @@ func All(cfg *config.Config) []*Step {
 		aptStep(), goStep(), gupStep(), rustupStep(), cargoStep(), nodeStep(),
 		pnpmStep(), uvStep(), pyenvStep(), pipStep(), claudeStep(), ghExtStep(), dockerStep(),
 	}
+	list = append(list, selfStep())
 	for _, c := range cfg.Custom {
 		list = append(list, customStep(c))
 	}
