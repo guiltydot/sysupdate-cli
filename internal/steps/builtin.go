@@ -234,8 +234,9 @@ func installedCrates(ctx context.Context) ([]crate, []string, error) {
 	return list, skipped, nil
 }
 
-// latestCrate reads the crates.io sparse index for the newest non-yanked release.
-func latestCrate(ctx context.Context, name string) (string, error) {
+// latestCrate reads the crates.io sparse index for the newest non-yanked
+// release. Prereleases count only when pre is set (the installed version is one).
+func latestCrate(ctx context.Context, name string, pre bool) (string, error) {
 	n := strings.ToLower(name)
 	var path string
 	switch len(n) {
@@ -258,7 +259,7 @@ func latestCrate(ctx context.Context, name string) (string, error) {
 	re := regexp.MustCompile(`"vers":"([^"]+)".*"yanked":(true|false)`)
 	for sc.Scan() {
 		m := re.FindStringSubmatch(sc.Text())
-		if m == nil || m[2] == "true" || isPrerelease(m[1]) {
+		if m == nil || m[2] == "true" || (!pre && isPrerelease(m[1])) {
 			continue
 		}
 		if best == "" || compareVersions(m[1], best) > 0 {
@@ -296,7 +297,7 @@ func cargoStep() *Step {
 			ch := make(chan res, len(list))
 			for _, c := range list {
 				go func() {
-					v, err := latestCrate(ctx, c.name)
+					v, err := latestCrate(ctx, c.name, isPrerelease(c.version))
 					ch <- res{c, v, err}
 				}()
 			}
@@ -332,8 +333,13 @@ func cargoStep() *Step {
 				if contains(cfg.Cargo.Exclude, c.name) {
 					continue
 				}
-				// cargo only rebuilds when a newer version exists.
-				acts = append(acts, Exec("cargo "+c.name, false, nil, "cargo", "install", "--locked", c.name))
+				// cargo only rebuilds when a newer version exists. Without a version
+				// it ignores prereleases, so a prerelease install asks for >= itself.
+				args := []string{"install", "--locked", c.name}
+				if isPrerelease(c.version) {
+					args = append(args, "--version", ">="+c.version)
+				}
+				acts = append(acts, Exec("cargo "+c.name, false, nil, "cargo", args...))
 			}
 			return acts, nil
 		},
