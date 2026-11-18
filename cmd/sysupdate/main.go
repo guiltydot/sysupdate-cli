@@ -374,10 +374,14 @@ func cmdSelfUpdate(args []string) int {
 		return 0
 	case buildinfo.Local:
 		if !*force {
-			fmt.Printf("local build (%s), not updated; use --force to replace it with %s\n", buildinfo.Version, latest.TagName)
+			if buildinfo.Newer(latest.TagName, buildinfo.Version) {
+				fmt.Printf("local build (%s), not updated; use --force to replace it with %s\n", buildinfo.Version, latest.TagName)
+			} else {
+				fmt.Printf("local build (%s) is not older than the latest release %s; not updated\n", buildinfo.Version, latest.TagName)
+			}
 			return 0
 		}
-		// A local build's version says little about its age, so --force replaces it regardless.
+		// --force replaces a local build regardless, e.g. to switch to a verified Release binary.
 	default:
 		if !buildinfo.Newer(latest.TagName, buildinfo.Version) {
 			fmt.Printf("sysupdate is up to date (%s).\n", buildinfo.Version)

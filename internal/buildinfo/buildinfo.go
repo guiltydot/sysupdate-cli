@@ -114,4 +114,15 @@ var goBinDirs = sync.OnceValue(func() []string {
 })
 
 // Newer reports whether tag is a newer version than current.
-func Newer(tag, current string) bool { return vercmp.Compare(tag, current) > 0 }
+//
+// A git-describe version such as v0.4.0-3-gabc1234 is built from commits after
+// v0.4.0, so it counts as newer than v0.4.0 (SemVer would sort it before, as a
+// prerelease). A -dirty suffix is ignored: v0.4.0-dirty is not older than v0.4.0.
+func Newer(tag, current string) bool {
+	cur := strings.TrimSpace(current)
+	cur = strings.TrimSuffix(strings.TrimSuffix(cur, "-dirty"), "+dirty")
+	if loc := describeRe.FindStringIndex(cur); loc != nil {
+		return vercmp.Compare(tag, cur[:loc[0]]) > 0
+	}
+	return vercmp.Compare(tag, cur) > 0
+}

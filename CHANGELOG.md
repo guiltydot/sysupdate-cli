@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `self-update` and `version --check` no longer report a git-describe build such as `v0.4.0-3-gabc1234` as older than `v0.4.0`, so `--force` is no longer suggested for a downgrade.
+
 ## [0.5.0] - 2026-11-18
 
 ### Added

@@ -45,6 +45,11 @@ func TestNewer(t *testing.T) {
 		{"v0.4.0", "v0.4.0", false},
 		{"v0.3.0", "v0.4.0", false}, // never downgrade
 		{"v0.5.0", "v0.5.0-rc.1", true},
+		{"v0.4.0", "v0.4.0-3-ge275482", false}, // describe builds are after their tag
+		{"v0.4.0", "v0.4.0-3-ge275482-dirty", false},
+		{"v0.5.0", "v0.4.0-3-ge275482", true},
+		{"v0.4.0", "v0.4.0-dirty", false},
+		{"v0.5.0", "v0.5.0-rc.1-2-gabc1234", true},
 	}
 	for _, c := range cases {
 		if got := Newer(c.tag, c.current); got != c.want {
