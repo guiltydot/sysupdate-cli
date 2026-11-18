@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write # create the GitHub Release
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -41,6 +43,13 @@ jobs:
           v="${VERSION#v}"
           awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} /^\[.*\]: http/ {f=0} f' CHANGELOG.md > notes.md
           test -s notes.md || echo "See CHANGELOG.md." > notes.md
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/checksums.txt
 
       - name: Publish GitHub Release
         env:
