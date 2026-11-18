@@ -17,13 +17,13 @@ If you want to add a new updater step, it helps to open an issue first so we can
 
 ## Development setup
 
-You need Go 1.26 or newer, plus [golangci-lint](https://golangci-lint.run) and [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) for the full checks.
+You need Go 1.26 or newer, plus [golangci-lint](https://golangci-lint.run), [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) and [actionlint](https://github.com/rhysd/actionlint) for the full checks.
 
 ```bash
 git clone https://github.com/guiltydot/sysupdate-cli.git
 cd sysupdate-cli
 make build          # ./sysupdate
-make check          # vet, tests, golangci-lint, govulncheck
+make check          # vet, tests, golangci-lint, govulncheck, actionlint
 ```
 
 To try the TUI without touching your real config or history, point it at a scratch config and state directory:

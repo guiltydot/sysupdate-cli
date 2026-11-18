@@ -20,10 +20,11 @@ vet:
 lint:
 	golangci-lint run ./...
 
-# Runs vet, tests, golangci-lint and govulncheck (the last two when installed).
+# Runs vet, tests, golangci-lint, govulncheck and actionlint (the last three when installed).
 check: vet test
 	@if command -v golangci-lint >/dev/null; then golangci-lint run ./...; else echo "golangci-lint not installed, skipping"; fi
 	@if command -v govulncheck >/dev/null; then govulncheck ./...; else echo "govulncheck not installed, skipping"; fi
+	@if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed, skipping"; fi
 
 # make release picks the next version from the commits since the last tag
 # (see scripts/release.sh), dates the CHANGELOG section, commits and tags.
